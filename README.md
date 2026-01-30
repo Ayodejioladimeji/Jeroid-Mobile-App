@@ -163,7 +163,7 @@ All components are separated into individual files for better maintainability an
 
 ## Extending for Real Blockchain
 
-1. **API layer** – Replace `api/balances.ts`, `api/swap.ts`, `api/withdrawal.ts` with real RPC/SDK calls (e.g. ethers, viem, or your backend).
+1. **API layer** – Replace `api/balances.ts`, `api/swap.ts`, `api/withdrawal.ts` with real RPC/SDK calls (e.g. ethers, viem, or backend).
 2. **Wallet** – Replace mock address in `walletSlice` with a real wallet (e.g. WalletConnect, MetaMask SDK, or embedded signer).
 3. **Tx lifecycle** – Keep the same Redux flow; plug in real tx submission and confirmation (e.g. wait for receipt, then set success/failed).
 4. **History** – Optionally sync with chain indexer or backend and still persist locally for offline view.
