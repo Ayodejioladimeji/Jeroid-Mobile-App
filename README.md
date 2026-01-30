@@ -1,97 +1,181 @@
-This is a new [**React Native**](https://reactnative.dev) project, bootstrapped using [`@react-native-community/cli`](https://github.com/react-native-community/cli).
+# Jeroid – DeFi Wallet App
 
-# Getting Started
+A production-quality DeFi Wallet mobile app built with **React Native CLI**. Features secure passcode authentication, wallet interactions, token swaps, withdrawals, transaction lifecycle handling, and polished UX. Mock blockchain logic is used; the architecture is designed to support real integrations later.
 
-> **Note**: Make sure you have completed the [Set Up Your Environment](https://reactnative.dev/docs/set-up-your-environment) guide before proceeding.
+## Features
 
-## Step 1: Start Metro
+- **Secure Passcode Authentication** – 6-digit numeric passcode with secure storage (iOS Keychain / Android Keystore), app lifecycle locking, inactivity timeout
+- **Wallet Dashboard** – Truncated address with copy, balances for ETH/USDT/DAI, pull-to-refresh (TanStack Query), skeleton loaders
+- **Token Swap** – Token A → Token B selector, amount + Max, estimated output & rate, validation (insufficient balance, disabled CTA with reason)
+- **Withdrawal** – Token selector, amount, recipient address (0x + 40 hex validation), estimated fee, QR scanner support, confirmation with amount/recipient/fee
+- **Transaction Lifecycle** – Centralized, type-safe states: Idle → Validating → Awaiting Approval → Broadcasting → Pending (tx hash) → Success / Failed (retry)
+- **Transaction History** – List of past swaps & withdrawals (type, amount, status, timestamp), search functionality, detail view, persisted via AsyncStorage
 
-First, you will need to run **Metro**, the JavaScript build tool for React Native.
+## Tech Stack
 
-To start the Metro dev server, run the following command from the root of your React Native project:
+- **React Native CLI**
+- **TypeScript**
+- **TanStack Query (React Query)** – All data fetching & caching, pull-to-refresh, invalidation
+- **Redux Toolkit** – Global state: wallet, tx lifecycle, UI, history, authentication
+- **React Navigation** – Native stack + bottom tabs
+- **AsyncStorage** – Persist transaction history
+- **react-native-keychain** – Secure passcode storage (iOS Keychain / Android Keystore)
+- **crypto-js** – Passcode hashing
+- **Lato** font (primary), **Deep Blue** primary brand color
 
-```sh
-# Using npm
+## Setup
+
+### Prerequisites
+
+- Node.js >= 20
+- React Native environment (Xcode for iOS, Android Studio for Android)
+- CocoaPods (iOS): `bundle install` then `bundle exec pod install` after first clone or native dep changes
+
+### Install & run
+
+```bash
+npm install
+
+cd ios && bundle exec pod install && cd ..
+
 npm start
 
-# OR using Yarn
-yarn start
-```
-
-## Step 2: Build and run your app
-
-With Metro running, open a new terminal window/pane from the root of your React Native project, and use one of the following commands to build and run your Android or iOS app:
-
-### Android
-
-```sh
-# Using npm
-npm run android
-
-# OR using Yarn
-yarn android
-```
-
-### iOS
-
-For iOS, remember to install CocoaPods dependencies (this only needs to be run on first clone or after updating native deps).
-
-The first time you create a new project, run the Ruby bundler to install CocoaPods itself:
-
-```sh
-bundle install
-```
-
-Then, and every time you update your native dependencies, run:
-
-```sh
-bundle exec pod install
-```
-
-For more information, please visit [CocoaPods Getting Started guide](https://guides.cocoapods.org/using/getting-started.html).
-
-```sh
-# Using npm
 npm run ios
-
-# OR using Yarn
-yarn ios
 ```
 
-If everything is set up correctly, you should see your new app running in the Android Emulator, iOS Simulator, or your connected device.
+### Lato font (optional)
 
-This is one way to run your app — you can also build it directly from Android Studio or Xcode.
+The app uses a theme font family of `Lato`. If Lato is not linked, the theme falls back to the system font. To add Lato:
 
-## Step 3: Modify your app
+1. Add Lato font files (e.g. `.ttf`) under `src/assets/fonts/`.
+2. Link assets via `react-native.config.js`:
 
-Now that you have successfully run the app, let's make changes!
+   ```js
+   module.exports = {
+     project: { ios: {}, android: {} },
+     assets: ['./src/assets/fonts/'],
+   };
+   ```
 
-Open `App.tsx` in your text editor of choice and make some changes. When you save, your app will automatically update and reflect these changes — this is powered by [Fast Refresh](https://reactnative.dev/docs/fast-refresh).
+3. Run `npx react-native-asset`.
 
-When you want to forcefully reload, for example to reset the state of your app, you can perform a full reload:
+## Architecture
 
-- **Android**: Press the <kbd>R</kbd> key twice or select **"Reload"** from the **Dev Menu**, accessed via <kbd>Ctrl</kbd> + <kbd>M</kbd> (Windows/Linux) or <kbd>Cmd ⌘</kbd> + <kbd>M</kbd> (macOS).
-- **iOS**: Press <kbd>R</kbd> in iOS Simulator.
+### Folder Structure
 
-## Congratulations! :tada:
+```
+src/
+  api/          # Data fetching & persistence (balances, swap, withdrawal, history)
+  store/        # Redux Toolkit slices (wallet, txLifecycle, ui, history, auth)
+  hooks/        # Reusable hooks (useBalances, useSwapQuote, useWithdrawalFee, useHistory, useAppDispatch/Selector)
+  components/   # Reusable UI components
+    - Button.tsx
+    - Card.tsx
+    - Input.tsx
+    - Skeleton.tsx (BalanceRowSkeleton, DashboardSkeleton)
+    - TokenSelector.tsx
+    - TokenPickerModal.tsx
+    - TxStatusBadge.tsx
+    - AddressWithCopy.tsx
+    - ErrorWithRetry.tsx
+    - AuthGate.tsx
+    - PasscodeDots.tsx
+    - Keypad.tsx
+    - KeypadButton.tsx
+    - DashboardTopBar.tsx
+    - ActionItem.tsx
+    - DetailRow.tsx
+    - ConfirmationRow.tsx
+    - HistoryItem.tsx
+  screens/      # Screen-level components
+    - DashboardScreen.tsx
+    - SwapScreen.tsx
+    - WithdrawScreen.tsx
+    - TxConfirmationScreen.tsx
+    - TxStatusScreen.tsx
+    - HistoryScreen.tsx
+    - HistoryDetailScreen.tsx
+    - QRScannerScreen.tsx
+  theme/        # Global colors, spacing, typography
+  types/        # Shared TypeScript types and navigation param lists
+  navigation/   # Root navigator (stack + tabs)
+  utils/        # Utility functions
+    - secureStorage.ts (passcode management)
+    - validation.ts (address validation)
+    - formatting.ts (hash truncation, ID generation)
+```
 
-You've successfully run and modified your React Native App. :partying_face:
+### Component Architecture
 
-### Now what?
+All components are separated into individual files for better maintainability and reusability:
 
-- If you want to add this new React Native code to an existing application, check out the [Integration guide](https://reactnative.dev/docs/integration-with-existing-apps).
-- If you're curious to learn more about React Native, check out the [docs](https://reactnative.dev/docs/getting-started).
+- **Auth Components**: `AuthGate`, `PasscodeDots`, `Keypad`, `KeypadButton` – Authentication UI
+- **Dashboard Components**: `DashboardTopBar`, `ActionItem` – Dashboard-specific UI
+- **Transaction Components**: `DetailRow`, `ConfirmationRow`, `HistoryItem` – Transaction-related UI
+- **Shared Components**: `Button`, `Card`, `Input`, `Skeleton`, `TokenSelector`, `TokenPickerModal`, `TxStatusBadge`, `AddressWithCopy`, `ErrorWithRetry` – Reusable across screens
 
-# Troubleshooting
+### Utility Functions
 
-If you're having issues getting the above steps to work, see the [Troubleshooting](https://reactnative.dev/docs/troubleshooting) page.
+- **secureStorage.ts**: Passcode hashing, secure storage operations (Keychain/Keystore)
+- **validation.ts**: Ethereum address validation
+- **formatting.ts**: Hash truncation, ID generation
 
-# Learn More
+### Data Flow
 
-To learn more about React Native, take a look at the following resources:
+- **TanStack Query** – Server-like data: balances, swap quote, withdrawal fee, persisted history (load/save via API layer). Pull-to-refresh and invalidation keep data fresh.
+- **Redux** – Client state: wallet address/connection, tx lifecycle (validating → … → success/failed), UI modals, in-memory history list, authentication state (isUnlocked, passcodeSet, failedAttempts, lastUnlockedAt).
+- **API layer** – All reads/writes go through `src/api/`. Mock implementations can be swapped for real RPC/SDK calls without changing screens.
 
-- [React Native Website](https://reactnative.dev) - learn more about React Native.
-- [Getting Started](https://reactnative.dev/docs/environment-setup) - an **overview** of React Native and how setup your environment.
-- [Learn the Basics](https://reactnative.dev/docs/getting-started) - a **guided tour** of the React Native **basics**.
-- [Blog](https://reactnative.dev/blog) - read the latest official React Native **Blog** posts.
-- [`@facebook/react-native`](https://github.com/facebook/react-native) - the Open Source; GitHub **repository** for React Native.
+### Authentication Flow
+
+- **App Launch**: `AuthGate` component checks if passcode is set
+- **First Launch**: User creates and confirms 6-digit passcode (hashed and stored securely)
+- **Subsequent Launches**: User enters passcode to unlock app
+- **App Lifecycle**: App locks automatically when:
+  - App goes to background
+  - Inactivity timeout expires (5 minutes)
+- **Security**: Passcode is hashed using SHA256 before storage, stored in iOS Keychain / Android Keystore
+
+### Transaction Lifecycle
+
+- Handled in **Redux** (`txLifecycleSlice`): status, type, txHash, error, meta.
+- **TxConfirmationScreen** drives the flow: set validating → awaiting approval → broadcasting → execute (swap/withdrawal API) → set pending/success or failed → persist record (API + Redux) → invalidate history query → navigate to **TxStatusScreen**.
+- **TxStatusScreen** shows status badge, amount, tx hash (copy), error + retry when failed. Balance refresh is triggered via TanStack Query invalidation on success.
+
+### Key Trade-offs
+
+1. **Mock vs real chain** – Balances, swap, and withdrawal are mocked in `api/`. Replacing them with real providers (e.g. ethers/viem + DEX/backend) only requires changing the API layer; store and screens stay the same.
+2. **History persistence** – History is stored in AsyncStorage and also kept in Redux when adding new txs. The History screen reads via TanStack Query (`loadHistory()`); after each new tx we append to AsyncStorage and invalidate the history query so the list stays in sync.
+3. **Navigation** – Stack holds: MainTabs (Dashboard, History), Swap, Withdraw, TxConfirmation, TxStatus, HistoryDetail, QRScanner. No deep linking in this version; can be added later.
+4. **Font** – Lato is the designated font; fallback to system font keeps the app runnable without extra asset setup.
+5. **Component Separation** – All components are in separate files for better maintainability, testability, and reusability.
+
+## UX
+
+- Secure passcode authentication gate on app launch
+- Skeleton loaders on dashboard and history while fetching
+- Disabled primary CTAs with explicit reasons (e.g. "Insufficient balance", "Enter amount")
+- Toasts for copy actions; modals/bottom sheet for token picker and confirmation
+- Light-mode-friendly palette (Deep Blue primary, light surfaces)
+- Centralized theme: no inline colors; use `theme.colors`, `theme.spacing`, `theme.typography`
+- Safe area insets applied across all screens for proper spacing
+- Consistent padding and spacing throughout the app
+
+## Extending for Real Blockchain
+
+1. **API layer** – Replace `api/balances.ts`, `api/swap.ts`, `api/withdrawal.ts` with real RPC/SDK calls (e.g. ethers, viem, or your backend).
+2. **Wallet** – Replace mock address in `walletSlice` with a real wallet (e.g. WalletConnect, MetaMask SDK, or embedded signer).
+3. **Tx lifecycle** – Keep the same Redux flow; plug in real tx submission and confirmation (e.g. wait for receipt, then set success/failed).
+4. **History** – Optionally sync with chain indexer or backend and still persist locally for offline view.
+
+## Scripts
+
+- `npm start` – Start Metro bundler
+- `npm run ios` – Run iOS app
+- `npm run android` – Run Android app
+- `npm run lint` – Run ESLint
+- `npm test` – Run Jest tests
+
+## License
+
+Private. See repo for details.
